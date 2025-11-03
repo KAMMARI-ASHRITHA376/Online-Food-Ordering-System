@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // MODIFIED
 import { Plus, Star, Leaf, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,111 +8,135 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useCart } from "@/contexts/CartContext";
 
-const allMenuItems = [
-  {
-    id: 1,
-    name: "Gourmet Burger Deluxe",
-    description: "Premium beef patty with fresh veggies and special sauce",
-    price: 329,
-    rating: 4.8,
-    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop",
-    category: "Burgers",
-    isHealthy: false,
-    calories: 650,
-  },
-  {
-    id: 2,
-    name: "Mediterranean Salad Bowl",
-    description: "Fresh greens, feta cheese, olives, and olive oil dressing",
-    price: 279,
-    rating: 4.9,
-    image: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&h=300&fit=crop",
-    category: "Healthy",
-    isHealthy: true,
-    calories: 320,
-  },
-  {
-    id: 3,
-    name: "Pepperoni Pizza",
-    description: "Classic Italian pizza with premium mozzarella",
-    price: 449,
-    rating: 4.7,
-    image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop",
-    category: "Pizza",
-    isHealthy: false,
-    calories: 890,
-  },
-  {
-    id: 4,
-    name: "Grilled Salmon",
-    description: "Fresh Atlantic salmon with quinoa and steamed vegetables",
-    price: 649,
-    rating: 5.0,
-    image: "https://images.unsplash.com/photo-1485921325833-c519f76c4927?w=400&h=300&fit=crop",
-    category: "Healthy",
-    isHealthy: true,
-    calories: 420,
-  },
-  {
-    id: 5,
-    name: "Chicken Caesar Wrap",
-    description: "Grilled chicken, romaine lettuce, parmesan, caesar dressing",
-    price: 199,
-    rating: 4.6,
-    image: "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=400&h=300&fit=crop",
-    category: "Burgers",
-    isHealthy: false,
-    calories: 580,
-  },
-  {
-    id: 6,
-    name: "Veggie Supreme Pizza",
-    description: "Loaded with fresh vegetables and mozzarella cheese",
-    price: 399,
-    rating: 4.5,
-    image: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop",
-    category: "Pizza",
-    isHealthy: false,
-    calories: 720,
-  },
-  {
-    id: 7,
-    name: "Quinoa Buddha Bowl",
-    description: "Nutrient-packed bowl with quinoa, avocado, and roasted veggies",
-    price: 299,
-    rating: 4.9,
-    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop",
-    category: "Healthy",
-    isHealthy: true,
-    calories: 380,
-  },
-  {
-    id: 8,
-    name: "Chocolate Lava Cake",
-    description: "Warm chocolate cake with molten center and vanilla ice cream",
-    price: 179,
-    rating: 4.8,
-    image: "https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=400&h=300&fit=crop",
-    category: "Desserts",
-    isHealthy: false,
-    calories: 520,
-  },
-];
+// --- NEW: Define the shape of data from your database ---
+type MenuItemFromDB = {
+  item_id: number;
+  restaurant_id: number;
+  item_name: string;
+  description: string;
+  price: number;
+  item_availability: boolean;
+  category: string;
+  health_score: number;
+  item_rating: number;
+  image_url: string;
+};
+
+// --- NEW: Define the shape of data your component expects ---
+type MenuItem = {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  rating: number;
+  image: string;
+  category: string;
+  isHealthy: boolean;
+  calories: number;
+};
+
+// --- REMOVED the hardcoded 'allMenuItems' array ---
 
 const Menu = () => {
+  // --- NEW: State for loading data from the API ---
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // --- Your existing states are perfect ---
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const { addToCart } = useCart();
 
-  const categories = ["All", "Burgers", "Pizza", "Healthy", "Desserts"];
+  // --- NEW: useEffect to fetch all menu items on component load ---
+  useEffect(() => {
+    const fetchAllMenuData = async () => {
+      try {
+        // Fetch from the general /api/menu endpoint to get ALL items
+        const response = await fetch("http://localhost:3001/api/menu");
 
-  const filteredItems = allMenuItems.filter((item) => {
-    const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
+        if (!response.ok) {
+          throw new Error("Failed to fetch menu. Is the backend server running?");
+        }
+
+        const data: MenuItemFromDB[] = await response.json();
+
+        // Transform database data into the format your component expects
+        const transformedData = data.map(item => ({
+          id: item.item_id,
+          name: item.item_name,
+          description: item.description,
+          price: parseFloat(String(item.price)),
+          rating: parseFloat(String(item.item_rating)),
+          image: item.image_url,
+          category: item.category,
+          isHealthy: item.category === 'Healthy',
+          calories: item.health_score,
+        }));
+
+        setMenuItems(transformedData); // Save the transformed data to state
+      } catch (err) {
+        if (err instanceof Error) setError(err.message);
+        else setError("An unknown error occurred.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllMenuData();
+  }, []); // Empty array means this runs once on load
+
+  // --- MODIFIED: Dynamically create categories from the fetched data ---
+  // We use 'new Set' to get only unique category names
+  const categories = ["All", ...new Set(menuItems.map(item => item.category))];
+
+  // --- MODIFIED: Changed 'allMenuItems.filter' to 'menuItems.filter' ---
+  const filteredItems = menuItems.filter((item) => {
+    // Determine if the category matches
+    let matchesCategory = false;
+    if (selectedCategory === "All") {
+      matchesCategory = true;
+    } else if (selectedCategory === "Healthy") {
+      matchesCategory = item.isHealthy;
+    } else {
+      matchesCategory = item.category === selectedCategory;
+    }
+
+    // Determine if the search query matches
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchQuery.toLowerCase());
+                          item.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
     return matchesCategory && matchesSearch;
   });
 
+  // --- NEW: Add loading and error states ---
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <Navbar />
+        <main className="py-16 md:py-24">
+          <div className="container mx-auto px-4 text-center">Loading full menu...</div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen">
+        <Navbar />
+        <main className="py-16 md:py-24">
+          <div className="container mx-auto px-4 text-center text-red-500">
+            <strong>Error:</strong> {error}
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // --- Your existing JSX (no changes needed) ---
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -141,7 +165,7 @@ const Menu = () => {
             </div>
           </div>
 
-          {/* Filter Pills */}
+          {/* Filter Pills (This now maps over your dynamic categories) */}
           <div className="flex flex-wrap justify-center gap-3 mb-12">
             {categories.map((category) => (
               <Button
@@ -156,7 +180,7 @@ const Menu = () => {
             ))}
           </div>
 
-          {/* Menu Grid */}
+          {/* Menu Grid (This now maps over your filtered items from the DB) */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredItems.map((item) => (
               <Card

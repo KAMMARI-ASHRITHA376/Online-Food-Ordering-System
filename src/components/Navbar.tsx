@@ -13,9 +13,11 @@ const Navbar = () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <div className="rounded-lg gradient-primary p-2">
-            <Leaf className="h-6 w-6 text-primary-foreground" />
-          </div>
+          <img 
+             src="/foodonic-icon.jpg"  // <-- Make sure this matches your new logo's filename
+             alt="Foodonic Logo" 
+             className="h-8 w-8"  // <-- You can adjust the size (h-8 w-8 is 32px)
+          />
           <div>
             <h1 className="font-['Poppins'] text-xl font-bold text-foreground">
               FOODONIC
