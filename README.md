@@ -65,20 +65,20 @@ This React application **will not work** without the database.
 3.  **Import the database schema:**
     (You must have a `.sql` file with your `CREATE TABLE` statements. Replace `path/to/schema.sql` with the actual path to your file.)
     ```bash
-    mysql -u YOUR_USERNAME -p foodonic_db < path/to/schema.sql
+    mysql -u root -p foodonic_db < path/to/schema.sql
     ```
 4.  **Import procedures & triggers (if separate):**
     (If you have other files for stored procedures, functions, or triggers, run them now.)
     ```bash
-    mysql -u YOUR_USERNAME -p foodonic_db < path/to/procedures.sql
+    mysql -u root -p foodonic_db < path/to/procedures.sql
     ```
 
 ### 2. Frontend Setup (React)
 
 1.  **Clone this repository:**
     ```bash
-    git clone [https://github.com/your-username/your-repo-name.git](https://github.com/your-username/your-repo-name.git)
-    cd your-repo-name
+    git clone (https://github.com/KAMMARI-ASHRITHA376/Online-Food-Ordering-System.git)
+    cd Online-Food-Ordering-System
     ```
 2.  **Install NPM packages:**
     ```bash
